@@ -1,183 +1,184 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>逃走中 通知システム 風デモ</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>逃走中 通知システム 風デモ</title>
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
 
-    body {
-      font-family: 'Orbitron', system-ui, sans-serif;
-      margin: 0;
-      background: radial-gradient(circle at top, #111 0%, #000 70%);
-      color: #fff;
-      min-height: 100vh;
-    }
+  body {
+    font-family: 'Orbitron', system-ui, sans-serif;
+    margin: 0;
+    background: radial-gradient(circle at top, #111 0%, #000 70%);
+    color: #fff;
+    min-height: 100vh;
+  }
 
-    header {
-      background: linear-gradient(90deg, #000, #222);
-      display: flex;
-      align-items: center;
-      padding: 10px 16px;
-      border-bottom: 2px solid red;
-      cursor: pointer;
-    }
+  header {
+    background: linear-gradient(90deg, #000, #222);
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 2px solid red;
+    cursor: pointer;
+  }
 
-    header img.logo {
-      height: 38px;
-      margin-right: 12px;
-    }
+  header img.logo {
+    height: 38px;
+    margin-right: 12px;
+  }
 
-    header h1 {
-      font-size: 18px;
-      letter-spacing: 1px;
-      margin: 0;
-      color: #ff3434;
-      text-shadow: 0 0 8px #ff0000;
-    }
+  header h1 {
+    font-size: 18px;
+    letter-spacing: 1px;
+    margin: 0;
+    color: #ff3434;
+    text-shadow: 0 0 8px #ff0000;
+  }
 
-    .btn {
-      background: linear-gradient(180deg, #ff3b3b, #8b0000);
-      color: #fff;
-      border: 1px solid #660000;
-      padding: 8px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      letter-spacing: 0.05em;
-    }
-    .btn:hover { opacity: 0.9; }
+  .btn {
+    background: linear-gradient(180deg, #ff3b3b, #8b0000);
+    color: #fff;
+    border: 1px solid #660000;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+  }
+  .btn:hover { opacity: 0.9; }
 
-    .btn.secondary {
-      background: #333;
-      border: 1px solid #555;
-    }
+  .btn.secondary {
+    background: #333;
+    border: 1px solid #555;
+  }
 
-    main {
-      padding: 20px;
-    }
+  main {
+    padding: 20px;
+  }
 
-    .center {
-      max-width: 900px;
-      margin: 0 auto;
-    }
+  .center {
+    max-width: 900px;
+    margin: 0 auto;
+  }
 
-    .panel {
-      background: rgba(20,20,20,0.9);
-      border: 2px solid #ff0000;
-      box-shadow: 0 0 20px rgba(255,0,0,0.2);
-      padding: 20px;
-      border-radius: 10px;
-      margin-top: 20px;
-    }
+  .panel {
+    background: rgba(20,20,20,0.9);
+    border: 2px solid #ff0000;
+    box-shadow: 0 0 20px rgba(255,0,0,0.2);
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+  }
 
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #555;
-      background: #111;
-      color: #fff;
-      font-size: 15px;
-    }
+  input, textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #111;
+    color: #fff;
+    font-size: 15px;
+  }
 
-    h2 {
-      color: #ff3434;
-      text-shadow: 0 0 10px #ff0000;
-    }
+  h2 {
+    color: #ff3434;
+    text-shadow: 0 0 10px #ff0000;
+  }
 
-    label { font-size: 14px; color: #ccc; }
+  label { font-size: 14px; color: #ccc; }
 
-    .overlay {
-      position: fixed; inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      background: rgba(0,0,0,0.8);
-    }
+  .overlay {
+    position: fixed; inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    background: rgba(0,0,0,0.8);
+  }
 
-    .popup {
-      background: #111;
-      border: 3px solid #ff0000;
-      box-shadow: 0 0 30px red;
-      border-radius: 12px;
-      padding: 40px;
-      text-align: center;
-      max-width: 90%;
-      color: #fff;
-      position: relative;
-    }
+  .popup {
+    background: #111;
+    border: 3px solid #ff0000;
+    box-shadow: 0 0 30px red;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    max-width: 90%;
+    color: #fff;
+  }
 
-    .popup h2 {
-      font-size: 32px;
-      margin-bottom: 10px;
-    }
+  .popup h2 {
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
 
-    .popup p {
-      font-size: 20px;
-      color: #ffdddd;
-    }
+  .popup p {
+    font-size: 20px;
+    color: #ffdddd;
+  }
 
-    .close {
-      margin-top: 20px;
-      background: #ff0000;
-      border: none;
-      color: #fff;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+  .close {
+    margin-top: 20px;
+    background: #ff0000;
+    border: none;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
 
-    /* パスワードモーダル */
-    #passwordModal {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.7);
-      z-index: 10000;
-    }
+  /* パスワードモーダル */
+  #passwordModal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.7);
+    z-index: 10000;
+  }
 
-    #passwordBox {
-      background: #111;
-      border: 2px solid red;
-      padding: 30px;
-      border-radius: 10px;
-      text-align: center;
-      color: #fff;
-    }
+  #passwordBox {
+    background: #111;
+    border: 2px solid red;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    color: #fff;
+  }
 
-    #passwordBox input {
-      margin-top: 10px;
-    }
+  #passwordBox input {
+    margin-top: 10px;
+  }
 
-    #passwordError {
-      color: #ff8080;
-      margin-top: 8px;
-      display: none;
-    }
+  #passwordError {
+    color: #ff8080;
+    margin-top: 8px;
+    display: none;
+  }
 
-    #receiverPreview {
-      margin-top: 30px;
-      width: 100%;
-      height: 400px;
-      border: 2px solid #ff0000;
-      border-radius: 10px;
-    }
+  /* プレビュー */
+  #receiverPreview {
+    margin-top: 30px;
+    width: 100%;
+    height: 400px;
+    border: 2px solid #ff0000;
+    border-radius: 10px;
+  }
 
-    #sentMessage {
-      color: #00ff00;
-      text-align: center;
-      margin-top: 10px;
-      display: none;
-      text-shadow: 0 0 5px #00ff00;
-    }
-  </style>
+  /* 送信完了メッセージ */
+  #sentMessage {
+    color: #00ff00;
+    text-align: center;
+    margin-top: 10px;
+    display: none;
+    text-shadow: 0 0 5px #00ff00;
+  }
+</style>
 </head>
 
 <body>
@@ -188,6 +189,7 @@
 
 <main>
   <div class="center">
+    <!-- メイン選択画面 -->
     <section id="indexView" class="panel">
       <h2>モード選択</h2>
       <p>どちらのモードで操作しますか？</p>
@@ -195,6 +197,7 @@
       <button id="toReceiver" class="btn secondary">受信者ページへ</button>
     </section>
 
+    <!-- 配信者ページ -->
     <section id="senderView" class="panel" style="display:none;">
       <h2>配信者モード</h2>
       <label>タイトル（任意）</label>
@@ -206,12 +209,14 @@
       </div>
       <div id="sentMessage">送信しました！</div>
 
+      <!-- ▼逃走者画面プレビュー -->
       <div style="margin-top:30px;">
         <h3 style="color:#ff3434;text-shadow:0 0 8px #ff0000;">逃走者モード プレビュー</h3>
         <iframe id="receiverPreview" title="受信者プレビュー"></iframe>
       </div>
     </section>
 
+    <!-- 受信者ページ -->
     <section id="receiverView" class="panel" style="display:none;">
       <h2>受信者モード</h2>
       <p>配信があると画面中央に通知が表示され、音が鳴ります。</p>
@@ -219,6 +224,7 @@
   </div>
 </main>
 
+<!-- ポップアップ -->
 <div id="overlay" class="overlay">
   <div class="popup">
     <h2 id="popupTitle"></h2>
@@ -227,6 +233,7 @@
   </div>
 </div>
 
+<!-- パスワード入力モーダル -->
 <div id="passwordModal">
   <div id="passwordBox">
     <h2>配信者ページ ログイン</h2>
@@ -239,27 +246,28 @@
   </div>
 </div>
 
+<!-- 効果音 -->
 <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
 
-<!-- Firebase SDK + アプリ処理 -->
+<!-- Firebase 連携 -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com/",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyDQ32VxTsd-8VvKXh6xtkrt4C_yqHNlNbM",
+    authDomain: "tousoutyu-for-12th.firebaseapp.com",
+    projectId: "tousoutyu-for-12th",
+    storageBucket: "tousoutyu-for-12th.firebasestorage.app",
+    messagingSenderId: "130361498059",
+    appId: "1:130361498059:web:0278dc6c06c245c1fcfe4e",
+    measurementId: "G-7FZM01BVY2"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-  const messageRef = ref(db, "tosouchu/message");
 
+  /* DOM */
   const indexView = document.getElementById('indexView');
   const senderView = document.getElementById('senderView');
   const receiverView = document.getElementById('receiverView');
@@ -279,7 +287,6 @@
   const receiverPreview = document.getElementById('receiverPreview');
   const logoHeader = document.getElementById('logoHeader');
   const sentMessage = document.getElementById('sentMessage');
-
   const PASSWORD = "sss12";
 
   function show(view) {
@@ -289,10 +296,18 @@
     view.style.display = 'block';
   }
 
-  toReceiver.onclick = () => {
-    show(receiverView);
-    // 受信者モードでリアルタイム受信を有効
-  };
+  /* 受信処理 */
+  const messagesRef = ref(db, "tosouchu/messages");
+  onChildAdded(messagesRef, (snapshot) => {
+    const data = snapshot.val();
+    popupTitle.textContent = data.title || "";
+    popupBody.textContent = `${data.message}\n(${data.timestamp})`;
+    overlay.style.display = 'flex';
+    alertSound.currentTime = 0;
+    alertSound.play();
+  });
+
+  toReceiver.onclick = () => show(receiverView);
 
   toSender.onclick = () => {
     passwordModal.style.display = 'flex';
@@ -306,7 +321,6 @@
       passwordModal.style.display = 'none';
       show(senderView);
       setupPreview();
-      startReceiverListener();
     } else {
       passwordError.style.display = 'block';
     }
@@ -314,17 +328,16 @@
 
   passwordCancel.onclick = () => passwordModal.style.display = 'none';
 
-  sendBtn.onclick = async () => {
+  sendBtn.onclick = () => {
     const title = document.getElementById('titleInput').value.trim();
     const message = document.getElementById('messageInput').value.trim();
     if (!message) {
       alert("本文を入力してください。");
       return;
     }
-
-    const time = Date.now();
-    await set(messageRef, { title, message, time });
-
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString();
+    push(messagesRef, { title, message, timestamp });
     sentMessage.style.display = 'block';
     setTimeout(() => {
       sentMessage.style.display = 'none';
@@ -333,75 +346,30 @@
     }, 3000);
   };
 
-  function listenerHandler(data) {
-    popupTitle.textContent = data.title || "";
-    popupBody.textContent = data.message;
-    overlay.style.display = 'flex';
-    alertSound.currentTime = 0;
-    alertSound.play();
-  }
-
-  function startReceiverListener() {
-    onValue(messageRef, (snapshot) => {
-      const d = snapshot.val();
-      if (!d) return;
-      listenerHandler(d);
-      // 同時にプレビュー用にも表示
-      // preview iframeには既に同じコードで反映されます
-    });
-  }
-
   function setupPreview() {
     const previewHTML = `
-    <!doctype html><html lang="ja"><head><meta charset="utf-8"/>
+    <!doctype html><html><head><meta charset='utf-8'/>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
-      body {
-        font-family: 'Orbitron', system-ui, sans-serif;
-        margin: 0;
-        background: radial-gradient(circle at top, #111 0%, #000 70%);
-        color: #fff;
-        min-height:100vh;
-      }
-      header {
-        background: linear-gradient(90deg,#000,#222);
-        display:flex;align-items:center;padding:10px 16px;border-bottom:2px solid red;
-      }
-      header img.logo { height:38px; margin-right:12px; }
-      header h1 { font-size:18px;letter-spacing:1px;margin:0;color:#ff3434;text-shadow:0 0 8px #ff0000; }
-      .panel { background:rgba(20,20,20,0.9);border:2px solid #ff0000;box-shadow:0 0 20px rgba(255,0,0,0.2);padding:20px;border-radius:10px;margin-top:20px;}
-      .overlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:9999; background:rgba(0,0,0,0.8);}
-      .popup { background:#111;border:3px solid #ff0000; box-shadow:0 0 30px red; border-radius:12px; padding:40px; text-align:center; max-width:90%; color:#fff; position:relative;}
-      .popup h2 { font-size:32px; margin-bottom:10px; }
-      .popup p { font-size:20px; color:#ffdddd; }
-      .close { margin-top:20px; background:#ff0000; border:none; color:#fff; padding:10px 16px; border-radius:8px; font-weight:bold; cursor:pointer; }
-    <\/style></head><body>
-      <header><img src="logo.png" class="logo" alt="ロゴ" /><h1>逃走中 通知システム</h1></header>
-      <main><div class="center"><section class="panel"><h2>受信者モード</h2><p>配信があると画面中央に通知が表示され、音が鳴ります。</p></section></div></main>
-      <div id="overlay" class="overlay"><div class="popup"><h2 id="popupTitle"></h2><p id="popupBody"></p><button id="closePopup" class="close">閉じる</button></div></div>
-      <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+      body { background: radial-gradient(circle at top, #111 0%, #000 70%); color:#fff; font-family:'Orbitron',system-ui,sans-serif; text-align:center; margin:0; padding:20px; }
+      h2 { color:#ff3434; text-shadow:0 0 10px #ff0000; }
+      .popup { background:#111; border:3px solid #ff0000; box-shadow:0 0 30px red; border-radius:12px; padding:30px; margin-top:40px; position:relative; }
+      .closeBtn { position:absolute; right:10px; bottom:10px; background:#ff0000; border:none; color:#fff; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; }
+    </style>
+    </head><body>
+      <h2>逃走者モード（プレビュー）</h2>
+      <div id='previewPopup'></div>
+      <script type='module'>
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
         const firebaseConfig = ${JSON.stringify(firebaseConfig)};
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const messageRef = ref(db, "tosouchu/message");
-        const alertSound = document.createElement('audio');
-        alertSound.src = 'alert.mp3';
-        alertSound.preload = 'auto';
-        onValue(messageRef, (snapshot) => {
+        const popup = document.getElementById('previewPopup');
+        const messagesRef = ref(db, "tosouchu/messages");
+        onChildAdded(messagesRef, (snapshot) => {
           const d = snapshot.val();
-          if (!d) return;
-          document.getElementById('popupTitle').textContent = d.title || "";
-          document.getElementById('popupBody').textContent = d.message;
-          const overlayEl = document.getElementById('overlay');
-          overlayEl.style.display = 'flex';
-          alertSound.currentTime = 0;
-          alertSound.play();
+          popup.innerHTML = "<div class='popup'><h3>" + (d.title||'') + "</h3><p>" + d.message + "<br>(" + d.timestamp + ")</p><button class='closeBtn' onclick='popup.innerHTML=\"\";'>閉じる</button></div>";
         });
-        document.getElementById('closePopup').onclick = () => {
-          document.getElementById('overlay').style.display = 'none';
-        };
       <\/script>
     </body></html>`;
     receiverPreview.srcdoc = previewHTML;
@@ -409,9 +377,6 @@
 
   logoHeader.onclick = () => show(indexView);
   closePopup.onclick = () => overlay.style.display = 'none';
-
-  // 受信者側も常にリアルタイムで受け取るように
-  startReceiverListener();
 </script>
 </body>
 </html>
