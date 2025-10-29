@@ -300,6 +300,11 @@ function addToTimeline(data) {
     <div style="color:#fff;">${data.message}</div>
   `;
   timeline.prepend(entry);
+
+  // ✅ 上限5件を超えた場合、古いものを削除
+  while (timeline.childElementCount > 5) {
+    timeline.removeChild(timeline.lastElementChild);
+  }
 }
 
 function show(view) {
