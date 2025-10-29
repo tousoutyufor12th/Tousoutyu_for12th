@@ -1,54 +1,234 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Realtime Test</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>逃走中 通知システム 風デモ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+  body {font-family:'Orbitron',system-ui,sans-serif;margin:0;background:radial-gradient(circle at top,#111 0%,#000 70%);color:#fff;min-height:100vh;}
+  header {background:linear-gradient(90deg,#000,#222);display:flex;align-items:center;padding:10px 16px;border-bottom:2px solid red;cursor:pointer;}
+  header img.logo {height:38px;margin-right:12px;}
+  header h1 {font-size:18px;letter-spacing:1px;margin:0;color:#ff3434;text-shadow:0 0 8px #ff0000;}
+  .btn {background:linear-gradient(180deg,#ff3b3b,#8b0000);color:#fff;border:1px solid #660000;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:bold;letter-spacing:0.05em;}
+  .btn:hover {opacity:0.9;}
+  .btn.secondary {background:#333;border:1px solid #555;}
+  main {padding:20px;}
+  .center {max-width:900px;margin:0 auto;}
+  .panel {background:rgba(20,20,20,0.9);border:2px solid #ff0000;box-shadow:0 0 20px rgba(255,0,0,0.2);padding:20px;border-radius:10px;margin-top:20px;}
+  input,textarea {width:100%;padding:10px;border-radius:6px;border:1px solid #555;background:#111;color:#fff;font-size:15px;}
+  h2 {color:#ff3434;text-shadow:0 0 10px #ff0000;}
+  label {font-size:14px;color:#ccc;}
+  .overlay {position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999;background:rgba(0,0,0,0.8);}
+  .popup {background:#111;border:3px solid #ff0000;box-shadow:0 0 30px red;border-radius:12px;padding:40px;text-align:center;max-width:90%;color:#fff;position:relative;}
+  .popup h2 {font-size:32px;margin-bottom:10px;}
+  .popup p {font-size:20px;color:#ffdddd;}
+  .close {margin-top:20px;background:#ff0000;border:none;color:#fff;padding:10px 16px;border-radius:8px;font-weight:bold;cursor:pointer;}
+  #passwordModal {position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:10000;}
+  #passwordBox {background:#111;border:2px solid red;padding:30px;border-radius:10px;text-align:center;color:#fff;}
+  #passwordBox input {margin-top:10px;}
+  #passwordError {color:#ff8080;margin-top:8px;display:none;}
+  #receiverPreview {margin-top:30px;width:100%;height:400px;border:2px solid #ff0000;border-radius:10px;}
+  #sentMessage {color:#00ff00;text-align:center;margin-top:10px;display:none;text-shadow:0 0 5px #00ff00;}
+</style>
 </head>
+
 <body>
-  <h2>リアルタイム更新テスト</h2>
+<header id="logoHeader">
+  <img src="logo.png" class="logo" alt="ロゴ" />
+  <h1>逃走中 通知システム</h1>
+</header>
 
-  <input type="text" id="messageInput" placeholder="メッセージを入力" />
-  <button id="sendBtn">送信</button>
+<main>
+  <div class="center">
+    <section id="indexView" class="panel">
+      <h2>モード選択</h2>
+      <p>どちらのモードで操作しますか？</p>
+      <button id="toSender" class="btn">配信者ページへ</button>
+      <button id="toReceiver" class="btn secondary">受信者ページへ</button>
+    </section>
 
-  <h3>📡 現在のメッセージ：</h3>
-  <p id="display">（ここにリアルタイム表示されます）</p>
+    <section id="senderView" class="panel" style="display:none;">
+      <h2>配信者モード</h2>
+      <label>タイトル（任意）</label>
+      <input id="titleInput" type="text" placeholder="例：緊急通報！">
+      <label style="margin-top:10px;">本文</label>
+      <textarea id="messageInput" rows="4" placeholder="メッセージを入力"></textarea>
+      <div style="margin-top:10px;">
+        <button id="sendBtn" class="btn">送信</button>
+      </div>
+      <div id="sentMessage">送信しました！</div>
 
-  <script type="module">
-    // Firebase SDKの読み込み
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+      <div style="margin-top:30px;">
+        <h3 style="color:#ff3434;text-shadow:0 0 8px #ff0000;">逃走者モード プレビュー</h3>
+        <iframe id="receiverPreview" title="受信者プレビュー"></iframe>
+      </div>
+    </section>
 
-    // あなたのFirebase構成情報（Firebase Console → 歯車アイコン → プロジェクト設定 → SDK構成 からコピー）
-    const firebaseConfig = {
-      apiKey: "あなたのAPIキー",
-      authDomain: "tousoutyu-for-12th.firebaseapp.com",
-      databaseURL: "https://tousoutyu-for-12th-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "tousoutyu-for-12th",
-      storageBucket: "tousoutyu-for-12th.appspot.com",
-      messagingSenderId: "XXXXXXXXXXXX",
-      appId: "1:XXXXXXXXXXXX:web:XXXXXXXXXXXXXX"
-    };
+    <section id="receiverView" class="panel" style="display:none;">
+      <h2>受信者モード</h2>
+      <p>配信があると画面中央に通知が表示され、音が鳴ります。</p>
+    </section>
+  </div>
+</main>
 
-    // Firebaseを初期化
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+<div id="overlay" class="overlay">
+  <div class="popup">
+    <h2 id="popupTitle"></h2>
+    <p id="popupBody"></p>
+    <button id="closePopup" class="close">閉じる</button>
+  </div>
+</div>
 
-    // データの参照
-    const messageRef = ref(db, "message");
+<div id="passwordModal">
+  <div id="passwordBox">
+    <h2>配信者ページ ログイン</h2>
+    <input id="passwordInput" type="password" placeholder="パスワードを入力">
+    <div id="passwordError">パスワードが違います。</div>
+    <div style="margin-top:10px;">
+      <button id="passwordSubmit" class="btn">OK</button>
+      <button id="passwordCancel" class="btn secondary">キャンセル</button>
+    </div>
+  </div>
+</div>
 
-    // データが更新されたらリアルタイムに表示
-    onValue(messageRef, (snapshot) => {
-      const data = snapshot.val();
-      document.getElementById("display").textContent = data || "(まだメッセージがありません)";
-    });
+<audio id="alertSound" src="alert.mp3" preload="auto"></audio>
 
-    // メッセージ送信ボタンの処理
-    document.getElementById("sendBtn").addEventListener("click", () => {
-      const message = document.getElementById("messageInput").value;
-      set(messageRef, message);
-      document.getElementById("messageInput").value = "";
-    });
-  </script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+  // === あなたのFirebase構成 ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQ32VxTsd-8VvKXh6xtkrt4C_yqHNlNbM",
+    authDomain: "tousoutyu-for-12th.firebaseapp.com",
+    projectId: "tousoutyu-for-12th",
+    storageBucket: "tousoutyu-for-12th.firebasestorage.app",
+    messagingSenderId: "130361498059",
+    appId: "1:130361498059:web:0278dc6c06c245c1fcfe4e",
+    measurementId: "G-7FZM01BVY2",
+    databaseURL: "https://tousoutyu-for-12th-default-rtdb.firebaseio.com" // ←これ重要！
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const messageRef = ref(db, "currentMessage");
+
+  // ===== DOM操作部分 =====
+  const indexView = document.getElementById('indexView');
+  const senderView = document.getElementById('senderView');
+  const receiverView = document.getElementById('receiverView');
+  const toSender = document.getElementById('toSender');
+  const toReceiver = document.getElementById('toReceiver');
+  const sendBtn = document.getElementById('sendBtn');
+  const overlay = document.getElementById('overlay');
+  const popupTitle = document.getElementById('popupTitle');
+  const popupBody = document.getElementById('popupBody');
+  const closePopup = document.getElementById('closePopup');
+  const alertSound = document.getElementById('alertSound');
+  const passwordModal = document.getElementById('passwordModal');
+  const passwordInput = document.getElementById('passwordInput');
+  const passwordSubmit = document.getElementById('passwordSubmit');
+  const passwordCancel = document.getElementById('passwordCancel');
+  const passwordError = document.getElementById('passwordError');
+  const receiverPreview = document.getElementById('receiverPreview');
+  const logoHeader = document.getElementById('logoHeader');
+  const sentMessage = document.getElementById('sentMessage');
+  const PASSWORD = "sss12";
+
+  function show(view) {
+    indexView.style.display = 'none';
+    senderView.style.display = 'none';
+    receiverView.style.display = 'none';
+    view.style.display = 'block';
+  }
+
+  // 受信側：Firebaseからリアルタイム受信
+  onValue(messageRef, (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
+    popupTitle.textContent = data.title || "";
+    popupBody.textContent = data.message || "";
+    overlay.style.display = 'flex';
+    alertSound.currentTime = 0;
+    alertSound.play();
+  });
+
+  // 送信側：Firebaseに書き込み
+  sendBtn.onclick = () => {
+    const title = document.getElementById('titleInput').value.trim();
+    const message = document.getElementById('messageInput').value.trim();
+    if (!message) { alert("本文を入力してください。"); return; }
+    set(messageRef, { title, message, time: Date.now() });
+    sentMessage.style.display = 'block';
+    setTimeout(() => {
+      sentMessage.style.display = 'none';
+      document.getElementById('titleInput').value = '';
+      document.getElementById('messageInput').value = '';
+    }, 3000);
+  };
+
+  // 画面切り替え
+  toReceiver.onclick = () => show(receiverView);
+  toSender.onclick = () => {
+    passwordModal.style.display = 'flex';
+    passwordInput.value = '';
+    passwordError.style.display = 'none';
+    passwordInput.focus();
+  };
+  passwordSubmit.onclick = () => {
+    if (passwordInput.value === PASSWORD) {
+      passwordModal.style.display = 'none';
+      show(senderView);
+      setupPreview();
+    } else passwordError.style.display = 'block';
+  };
+  passwordCancel.onclick = () => passwordModal.style.display = 'none';
+  closePopup.onclick = () => overlay.style.display = 'none';
+  logoHeader.onclick = () => show(indexView);
+
+  // プレビュー内でも同様のFirebase受信を再現
+  function setupPreview() {
+    const html = `
+      <!doctype html><html><head><meta charset='utf-8'/>
+      <style>
+        body{font-family:'Orbitron',system-ui,sans-serif;margin:0;background:radial-gradient(circle at top,#111 0%,#000 70%);color:#fff;text-align:center;min-height:100vh;}
+        .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999;background:rgba(0,0,0,0.8);}
+        .popup{background:#111;border:3px solid #ff0000;box-shadow:0 0 30px red;border-radius:12px;padding:40px;text-align:center;max-width:90%;color:#fff;position:relative;}
+        .popup h2{font-size:32px;margin-bottom:10px;}
+        .popup p{font-size:20px;color:#ffdddd;}
+        .close{margin-top:20px;background:#ff0000;border:none;color:#fff;padding:10px 16px;border-radius:8px;font-weight:bold;cursor:pointer;}
+      </style></head><body>
+      <h2 style='color:#ff3434;text-shadow:0 0 10px #ff0000;'>逃走者モード</h2>
+      <p>配信があると通知が表示されます。</p>
+      <div id='overlay' class='overlay'>
+        <div class='popup'>
+          <h2 id='popupTitle'></h2>
+          <p id='popupBody'></p>
+          <button id='closePopup' class='close'>閉じる</button>
+        </div>
+      </div>
+      <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+        const app = initializeApp(${JSON.stringify(firebaseConfig)});
+        const db = getDatabase(app);
+        const messageRef = ref(db, "currentMessage");
+        const overlay = document.getElementById('overlay');
+        const popupTitle = document.getElementById('popupTitle');
+        const popupBody = document.getElementById('popupBody');
+        const closePopup = document.getElementById('closePopup');
+        onValue(messageRef, (snapshot)=>{
+          const data = snapshot.val();
+          if(!data)return;
+          popupTitle.textContent=data.title||'';
+          popupBody.textContent=data.message||'';
+          overlay.style.display='flex';
+        });
+        closePopup.onclick = ()=>overlay.style.display='none';
+      <\\/script></body></html>`;
+    receiverPreview.srcdoc = html;
+  }
+</script>
 </body>
 </html>
