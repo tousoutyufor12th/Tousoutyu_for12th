@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>逃走中 通知システム 風デモ</title>
+<title>逃走中 通知システム</title>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
@@ -187,15 +187,15 @@
   <div class="center">
     <section id="indexView" class="panel">
       <h2>モード選択</h2>
-      <p>どちらのモードで操作しますか？</p>
+      <p>参加するモードを選択してください。</p>
       <button id="toSender" class="btn">配信者ページへ</button>
       <button id="toReceiver" class="btn secondary">受信者ページへ</button>
     </section>
 
     <section id="senderView" class="panel" style="display:none;">
-      <h2>配信者モード</h2>
+      <h2>ゲームマスターモード</h2>
       <label>タイトル（任意）</label>
-      <input id="titleInput" type="text" placeholder="例：緊急通報！">
+      <input id="titleInput" type="text" placeholder="タイトルを入力">
       <label style="margin-top:10px;">本文</label>
       <textarea id="messageInput" rows="4" placeholder="メッセージを入力"></textarea>
       <div style="margin-top:10px;">
@@ -205,15 +205,15 @@
 
       <div style="margin-top:30px;">
         <h3 style="color:#ff3434;text-shadow:0 0 8px #ff0000;">逃走者モード プレビュー</h3>
-        <iframe id="receiverPreview" title="受信者プレビュー"></iframe>
+        <iframe id="receiverPreview" title="逃走者プレビュー"></iframe>
       </div>
     </section>
 
     <section id="receiverView" class="panel" style="display:none;">
-      <h2>受信者モード</h2>
-      <p>配信があると画面中央に通知が表示され、音が鳴ります。</p>
-      <button id="soundTestBtn" class="btn" style="margin-top:10px;">🔈 音が鳴るかテスト</button>
-<p id="soundStatus" style="color:#0f0; display:none; margin-top:8px;">音声が有効になりました。</p>
+      <h2>逃走者モード</h2>
+      <p>ゲーム中は端末の音量を最大にし、このページを閉じないでください。</p>
+      <button id="soundTestBtn" class="btn" style="margin-top:10px;">🔈 通知音テスト</button>
+<p id="soundStatus" style="color:#0f0; display:none; margin-top:8px;">通知音が有効になりました。</p>
     </section>
   </div>
 </main>
@@ -228,7 +228,7 @@
 
 <div id="passwordModal">
   <div id="passwordBox">
-    <h2>配信者ページ ログイン</h2>
+    <h2>ゲームマスターページ ログイン</h2>
     <input id="passwordInput" type="password" placeholder="パスワードを入力">
     <div id="passwordError">パスワードが違います。</div>
     <div style="margin-top:10px;">
