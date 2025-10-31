@@ -212,6 +212,8 @@
     <section id="receiverView" class="panel" style="display:none;">
       <h2>受信者モード</h2>
       <p>配信があると画面中央に通知が表示され、音が鳴ります。</p>
+      <button id="soundTestBtn" class="btn" style="margin-top:10px;">🔈 音が鳴るかテスト</button>
+<p id="soundStatus" style="color:#0f0; display:none; margin-top:8px;">音声が有効になりました。</p>
     </section>
   </div>
 </main>
@@ -237,6 +239,7 @@
 </div>
 
 <audio id="alertSound" src="alarm.mp3" preload="auto"></audio>
+  <audio id="testSound" src="message.mp3" preload="auto"></audio>
 
 <!-- 🔥 Firebase連携スクリプト -->
 <script type="module">
@@ -352,23 +355,44 @@ sendBtn.onclick = () => {
   }, 3000);
 };
 
-// 🔥 Firebase経由でリアルタイム受信（履歴対応）
+// 🔥 Firebase経由でリアルタイム受信（確認ボタン付き + 履歴対応）
 const messagesRef = ref(db, "broadcast/messages");
+const testSound = document.getElementById("testSound");
+
 onChildAdded(messagesRef, (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
 
-  // 通知ポップアップ
-  popupTitle.textContent = data.title || "";
-  popupBody.textContent = data.message || "";
-  overlay.style.display = 'flex';
-  alertSound.currentTime = 0;
-  alertSound.play();
+  // 「新しい通知があります」モードを表示
+  popupTitle.textContent = "新しい通知があります";
+  popupBody.innerHTML = `<button id="confirmNoticeBtn" class="btn" style="margin-top:15px;">通知を確認</button>`;
+  overlay.style.display = "flex";
 
-  // タイムラインに追加
-  addToTimeline(data);
+  const confirmBtn = document.getElementById("confirmNoticeBtn");
+  confirmBtn.onclick = async () => {
+    try {
+      // test.mp3 を再生
+      testSound.currentTime = 0;
+      await testSound.play();
+
+      // 少し待ってから本来の通知内容を表示
+      setTimeout(() => {
+        popupTitle.textContent = data.title || "";
+        popupBody.textContent = data.message || "";
+
+        // 通知サウンド（alertSound）も再生
+        alertSound.currentTime = 0;
+        alertSound.play();
+
+        // タイムラインに追加
+        addToTimeline(data);
+      }, 500);
+    } catch (e) {
+      console.warn("音声再生がブロックされました:", e);
+    }
+  };
 });
-
+  
 function setupPreview() {
   const html = `
   <!doctype html><html><head><meta charset='utf-8'/>
@@ -411,7 +435,41 @@ function setupPreview() {
 }
 
 logoHeader.onclick = () => show(indexView);
-closePopup.onclick = () => overlay.style.display = 'none';
+closePopup.onclick = async () => {
+  try {
+    testSound.currentTime = 0;
+    await testSound.play();
+  } catch (e) {
+    console.warn("閉じる時の音がブロックされました");
+  }
+  overlay.style.display = 'none';
+};
+  // --- 🔈 音声テスト機能 + 永続化 ---
+const soundTestBtn = document.getElementById('soundTestBtn');
+const soundStatus = document.getElementById('soundStatus');
+
+// 1️⃣ テストボタンが押されたら音を鳴らす
+soundTestBtn.onclick = async () => {
+  try {
+    await alertSound.play();
+    localStorage.setItem("soundEnabled", "true");
+    soundStatus.style.display = "block";
+    soundStatus.textContent = "音声が有効になりました。";
+  } catch (e) {
+    soundStatus.style.display = "block";
+    soundStatus.style.color = "#ff8080";
+    soundStatus.textContent = "音がブロックされました。操作を再試行してください。";
+  }
+};
+
+// 2️⃣ ページ読み込み時に許可情報があれば自動再生を試行
+window.addEventListener("DOMContentLoaded", () => {
+  if (localStorage.getItem("soundEnabled") === "true") {
+    alertSound.play().catch(() => {
+      console.log("自動再生がブロックされました");
+    });
+  }
+});
 </script>
 </body>
 </html>
