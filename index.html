@@ -355,40 +355,48 @@ sendBtn.onclick = () => {
   }, 3000);
 };
 
-// 🔥 Firebase経由でリアルタイム受信（確認ボタン付き + 履歴対応）
+// 🔥 Firebase経由でリアルタイム受信（2段階通知 + 音声分離 + 履歴対応）
 const messagesRef = ref(db, "broadcast/messages");
-const testSound = document.getElementById("testSound");
+const alarmSound = document.getElementById("alertSound");   // alarm.mp3
+const messageSound = document.getElementById("testSound");  // message.mp3
 
 onChildAdded(messagesRef, (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
 
-  // 「新しい通知があります」モードを表示
+  // --- ステップ1: 「新しい通知があります」ポップアップを表示 ---
   popupTitle.textContent = "新しい通知があります";
   popupBody.innerHTML = `<button id="confirmNoticeBtn" class="btn" style="margin-top:15px;">通知を確認</button>`;
   overlay.style.display = "flex";
 
+  // 🔊 alarm.mp3 再生
+  try {
+    alarmSound.currentTime = 0;
+    alarmSound.play();
+  } catch (e) {
+    console.warn("alarm.mp3 再生がブロックされました:", e);
+  }
+
+  // --- ステップ2: 「通知を確認」ボタンが押されたら ---
   const confirmBtn = document.getElementById("confirmNoticeBtn");
   confirmBtn.onclick = async () => {
     try {
-      // test.mp3 を再生
-      testSound.currentTime = 0;
-      await testSound.play();
+      // alarm.mp3 を停止
+      alarmSound.pause();
+      alarmSound.currentTime = 0;
 
-      // 少し待ってから本来の通知内容を表示
-      setTimeout(() => {
-        popupTitle.textContent = data.title || "";
-        popupBody.textContent = data.message || "";
+      // 🔊 message.mp3 を再生
+      messageSound.currentTime = 0;
+      await messageSound.play();
 
-        // 通知サウンド（alertSound）も再生
-        alertSound.currentTime = 0;
-        alertSound.play();
+      // 本来の通知本文を表示
+      popupTitle.textContent = data.title || "";
+      popupBody.textContent = data.message || "";
 
-        // タイムラインに追加
-        addToTimeline(data);
-      }, 500);
+      // 履歴追加
+      addToTimeline(data);
     } catch (e) {
-      console.warn("音声再生がブロックされました:", e);
+      console.warn("message.mp3 再生がブロックされました:", e);
     }
   };
 });
