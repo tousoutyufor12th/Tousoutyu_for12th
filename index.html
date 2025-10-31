@@ -178,6 +178,10 @@
 </head>
 
 <body>
+  <!-- 👥 接続数表示エリア -->
+<div id="connectionStatus" style="position:fixed; top:10px; right:10px; background:#000000aa; color:white; padding:8px 12px; border-radius:6px; font-size:14px; z-index:999;">
+  👤 配信者: <span id="hostCount">0</span>　👥 受信者: <span id="viewerCount">0</span>
+</div>
 <header id="logoHeader">
   <img src="logo.PNG" class="logo" alt="ロゴ" />
   <h1>逃走中 通知システム</h1>
@@ -244,8 +248,8 @@
 <!-- 🔥 Firebase連携スクリプト -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-
+import { getDatabase, ref, push, onChildAdded, onDisconnect, remove, onValue } 
+  from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 const firebaseConfig = {
   apiKey: "AIzaSyDQ32VxTsd-8VvKXh6xtkrt4C_yqHNlNbM",
   authDomain: "tousoutyu-for-12th.firebaseapp.com",
@@ -259,72 +263,65 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+  // --- 👥 接続数カウント機能 ---
 
-// --- 以下はUI関連ロジック ---
-const indexView = document.getElementById('indexView');
-const senderView = document.getElementById('senderView');
-const receiverView = document.getElementById('receiverView');
-const toSender = document.getElementById('toSender');
-const toReceiver = document.getElementById('toReceiver');
-const sendBtn = document.getElementById('sendBtn');
-const overlay = document.getElementById('overlay');
-const popupTitle = document.getElementById('popupTitle');
-const popupBody = document.getElementById('popupBody');
-const closePopup = document.getElementById('closePopup');
-const alertSound = document.getElementById('alertSound');
-const passwordModal = document.getElementById('passwordModal');
-const passwordInput = document.getElementById('passwordInput');
-const passwordSubmit = document.getElementById('passwordSubmit');
-const passwordCancel = document.getElementById('passwordCancel');
-const passwordError = document.getElementById('passwordError');
-const receiverPreview = document.getElementById('receiverPreview');
-const logoHeader = document.getElementById('logoHeader');
-const sentMessage = document.getElementById('sentMessage');
-const PASSWORD = "sss12";
+// どちらのページかを識別（例: host.html と viewer.html で分ける）
+// --- モード切り替え管理用 ---
+let isHostPage = false; // 初期状態では受信者とみなす
 
-// ✅ タイムライン領域（受信者用）
-const timelineContainer = document.createElement("div");
-timelineContainer.style.marginTop = "20px";
-timelineContainer.style.borderTop = "1px solid #333";
-timelineContainer.style.paddingTop = "10px";
-timelineContainer.innerHTML = "<h3 style='color:#ff3434;text-shadow:0 0 8px #ff0000;'>受信履歴</h3><div id='timeline'></div>";
-receiverView.appendChild(timelineContainer);
-const timeline = document.getElementById("timeline");
+const toSender = document.getElementById("toSender");
+const toReceiver = document.getElementById("toReceiver");
 
-function addToTimeline(data) {
-  const time = new Date(data.timestamp).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const entry = document.createElement("div");
-  entry.style.borderLeft = "2px solid #ff0000";
-  entry.style.padding = "6px 10px";
-  entry.style.marginBottom = "8px";
-  entry.innerHTML = `
-    <div style="font-size:13px;color:#aaa;">${time}</div>
-    <div style="font-weight:bold;color:#ff5555;">${data.title || "（無題）"}</div>
-    <div style="color:#fff;">${data.message}</div>
-  `;
-  timeline.prepend(entry);
+// --- モード切り替え＆接続登録を一元化 ---
+const toSender = document.getElementById("toSender");
+const toReceiver = document.getElementById("toReceiver");
 
-  // ✅ 上限5件を超えた場合、古いものを削除
-  while (timeline.childElementCount > 5) {
-    timeline.removeChild(timeline.lastElementChild);
-  }
-}
+let myConnectionRef = null; // 接続情報を保持
 
-function show(view) {
-  indexView.style.display = 'none';
-  senderView.style.display = 'none';
-  receiverView.style.display = 'none';
-  view.style.display = 'block';
-}
-
-toReceiver.onclick = () => show(receiverView);
 toSender.onclick = () => {
+  // モード切替（配信者）
+  isHostPage = true;
   passwordModal.style.display = 'flex';
   passwordInput.value = '';
   passwordError.style.display = 'none';
   passwordInput.focus();
+
+  // まだ接続登録していなければ追加
+  if (!myConnectionRef) {
+    const connectionRef = ref(db, "connections/hosts");
+    myConnectionRef = push(connectionRef, { connectedAt: Date.now() });
+    onDisconnect(myConnectionRef).remove();
+  }
 };
 
+toReceiver.onclick = () => {
+  // モード切替（受信者）
+  isHostPage = false;
+  show(receiverView);
+
+  // まだ接続登録していなければ追加
+  if (!myConnectionRef) {
+    const connectionRef = ref(db, "connections/viewers");
+    myConnectionRef = push(connectionRef, { connectedAt: Date.now() });
+    onDisconnect(myConnectionRef).remove();
+  }
+};
+
+// 人数カウント用参照
+const hostRef = ref(db, "connections/hosts");
+const viewerRef = ref(db, "connections/viewers");
+
+const hostCountEl = document.getElementById("hostCount");
+const viewerCountEl = document.getElementById("viewerCount");
+
+// リアルタイムで人数を更新
+onValue(hostRef, (snapshot) => {
+  hostCountEl.textContent = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+});
+onValue(viewerRef, (snapshot) => {
+  viewerCountEl.textContent = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+});
+  
 passwordSubmit.onclick = () => {
   if (passwordInput.value === PASSWORD) {
     passwordModal.style.display = 'none';
@@ -445,8 +442,8 @@ function setupPreview() {
 logoHeader.onclick = () => show(indexView);
 closePopup.onclick = async () => {
   try {
-    testSound.currentTime = 0;
-    await testSound.play();
+    messageSound.currentTime = 0;
+    await messageSound.play();
   } catch (e) {
     console.warn("閉じる時の音がブロックされました");
   }
