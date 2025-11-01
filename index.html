@@ -262,6 +262,7 @@
 
 <audio id="alertSound" src="alarm.mp3" preload="auto"></audio>
   <audio id="testSound" src="message.mp3" preload="auto"></audio>
+  <audio id="runForMoneySound" src="Run for money.mp3" preload="auto"></audio>
 
 <!-- 🔥 Firebase連携スクリプト -->
 <script type="module">
@@ -501,6 +502,27 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });  
     
+</script>
+  <script>
+  // 🎵 「次へ」ボタンを押したときに Run for money.mp3 を再生
+  const introOverlay = document.getElementById('introOverlay');
+  const introNextBtn = document.getElementById('introNextBtn');
+  const runForMoneySound = document.getElementById('runForMoneySound');
+
+  introNextBtn.addEventListener('click', async () => {
+    // ポップアップをフェードアウト
+    introOverlay.style.transition = 'opacity 0.6s';
+    introOverlay.style.opacity = '0';
+    setTimeout(() => (introOverlay.style.display = 'none'), 600);
+
+    // 音声を再生
+    try {
+      runForMoneySound.currentTime = 0;
+      await runForMoneySound.play();
+    } catch (e) {
+      console.warn('Run for money.mp3 再生がブロックされました:', e);
+    }
+  });
 </script>
 </body>
 </html>
