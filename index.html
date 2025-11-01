@@ -198,7 +198,15 @@
   <button id="introNextBtn" class="btn" style="margin-top:20px;">次へ</button>
 
   <!-- 非表示で音だけ流す動画 -->
-  <video id="introVideo" src="start.mp4" preload="auto" playsinline style="display:none;"></video>
+<video
+  id="introVideo"
+  src="start.mp4"
+  preload="auto"
+  playsinline
+  webkit-playsinline
+  controlslist="nodownload nofullscreen noremoteplayback"
+  style="display:none;"
+></video>
 </div>
   
 <body>
