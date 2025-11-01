@@ -177,6 +177,30 @@
 </style>
 </head>
 
+<!-- 🎬 初回ポップアップ＋非表示動画 -->
+<div id="introOverlay" style="
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.95);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:10000;
+  text-align:center;
+  color:#fff;
+  font-family:'Orbitron',system-ui,sans-serif;
+">
+  <h2 style="color:#ff3434;text-shadow:0 0 10px #ff0000;">音量設定のお願い</h2>
+  <p style="max-width:80%;font-size:18px;line-height:1.6;">
+    端末の音量を最大にし、マナーモードを解除してください。<br>
+    設定が完了したら下のボタンを押してください。
+  </p>
+  <button id="introNextBtn" class="btn" style="margin-top:20px;">次へ</button>
+
+  <!-- 非表示で音だけ流す動画 -->
+  <video id="introVideo" src="start.mp4" preload="auto" playsinline style="display:none;"></video>
+</div>
+  
 <body>
 <header id="logoHeader">
   <img src="logo.PNG" class="logo" alt="ロゴ" />
@@ -246,7 +270,37 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+  // --- 🎬 初回ポップアップ＆start.mp4再生 ---
+window.addEventListener("DOMContentLoaded", () => {
+  const introOverlay = document.getElementById("introOverlay");
+  const introNextBtn = document.getElementById("introNextBtn");
+  const introVideo = document.getElementById("introVideo");
 
+  // 毎回ページロード時に表示（ローカルストレージ関係なく常に出す）
+  introOverlay.style.display = "flex";
+
+  introNextBtn.addEventListener("click", async () => {
+    try {
+      introNextBtn.disabled = true;
+      introNextBtn.textContent = "再生中...";
+      introVideo.style.display = "none";
+      introOverlay.style.background = "black";
+
+      // start.mp4 再生開始
+      await introVideo.play();
+
+      // 再生完了時に通常画面へ遷移
+      introVideo.onended = () => {
+        introOverlay.style.display = "none";
+      };
+    } catch (e) {
+      console.warn("動画再生がブロックされました:", e);
+      introOverlay.style.display = "none";
+    }
+  });
+});
+
+  
 const firebaseConfig = {
   apiKey: "AIzaSyDQ32VxTsd-8VvKXh6xtkrt4C_yqHNlNbM",
   authDomain: "tousoutyu-for-12th.firebaseapp.com",
