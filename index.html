@@ -201,6 +201,26 @@
       <div style="margin-top:10px;">
         <button id="sendBtn" class="btn">送信</button>
       </div>
+      <!-- 🎯 カウントダウンタイマー -->
+<div id="timerSection" style="margin-top:30px;">
+  <h3 style="color:#ff3434;text-shadow:0 0 8px #ff0000;">ゲームタイマー（カウントダウン）</h3>
+  <div style="margin:10px 0;">
+    <label>分: <input id="minutesInput" type="number" min="0" max="999" value="1" style="width:60px;"></label>
+    <label>秒: <input id="secondsInput" type="number" min="0" max="59" value="0" style="width:60px;"></label>
+  </div>
+  <div id="timerDisplay" style="
+    font-size:64px;
+    font-family:'Orbitron',system-ui,sans-serif;
+    color:#00ff00;
+    text-shadow:0 0 20px #00ff00;
+    margin:20px 0;
+  ">01:00</div>
+  <div>
+    <button id="startTimerBtn" class="btn">▶ スタート</button>
+    <button id="stopTimerBtn" class="btn secondary">⏸ ストップ</button>
+    <button id="resetTimerBtn" class="btn secondary">🔁 リセット</button>
+  </div>
+</div>
       <div id="sentMessage">送信しました！</div>
 
       <div style="margin-top:30px;">
@@ -211,6 +231,15 @@
 
     <section id="receiverView" class="panel" style="display:none;">
       <h2>逃走者モード</h2>
+      <!-- 🕒 逃走者画面タイマー -->
+<div id="viewerTimer" style="
+  font-size:48px;
+  font-family:'Orbitron',system-ui,sans-serif;
+  color:#00ff00;
+  text-align:center;
+  margin-bottom:20px;
+  text-shadow:0 0 15px #00ff00;
+">00:00</div>
       <p>ゲーム中は端末の音量を最大にし、このページを閉じないでください。</p>
       <button id="soundTestBtn" class="btn" style="margin-top:10px;">🔈 通知音テスト</button>
 <p id="soundStatus" style="color:#0f0; display:none; margin-top:8px;">通知音が有効になりました。</p>
@@ -240,6 +269,7 @@
 
 <audio id="alertSound" src="alarm.mp3" preload="auto"></audio>
   <audio id="testSound" src="message.mp3" preload="auto"></audio>
+  <audio id="startSound" src="start.mp3" preload="auto"></audio>
 
 <!-- 🔥 Firebase連携スクリプト -->
 <script type="module">
@@ -476,6 +506,125 @@ window.addEventListener("DOMContentLoaded", () => {
     alertSound.play().catch(() => {
       console.log("自動再生がブロックされました");
     });
+  }
+});
+  // ===============================
+// 🕒 カウントダウンタイマー（リアルタイム同期）
+// ===============================
+const timerDisplay = document.getElementById("timerDisplay");
+const viewerTimer = document.getElementById("viewerTimer");
+const startBtn = document.getElementById("startTimerBtn");
+const stopBtn = document.getElementById("stopTimerBtn");
+const resetBtn = document.getElementById("resetTimerBtn");
+const minutesInput = document.getElementById("minutesInput");
+const secondsInput = document.getElementById("secondsInput");
+const startSound = document.getElementById("startSound");
+const alarmSound = document.getElementById("alarmSound"); // 既存のalarm.mp3を利用
+
+let countdownInterval = null;
+let remainingTime = 0; // ミリ秒
+let endTime = null;
+let isRunning = false;
+const timerRef = ref(db, "gameTimer");
+
+// 表示更新関数
+function updateTimerDisplay(ms) {
+  if (ms < 0) ms = 0;
+  const totalSec = Math.floor(ms / 1000);
+  const min = String(Math.floor(totalSec / 60)).padStart(2, "0");
+  const sec = String(totalSec % 60).padStart(2, "0");
+  if (timerDisplay) timerDisplay.textContent = `${min}:${sec}`;
+  if (viewerTimer) viewerTimer.textContent = `${min}:${sec}`;
+}
+
+// タイマー更新処理
+function startLocalCountdown() {
+  clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    const now = Date.now();
+    remainingTime = endTime - now;
+    updateTimerDisplay(remainingTime);
+    if (remainingTime <= 0) {
+      clearInterval(countdownInterval);
+      remainingTime = 0;
+      isRunning = false;
+      updateTimerDisplay(0);
+      if (alarmSound) {
+        alarmSound.currentTime = 0;
+        alarmSound.play();
+      }
+    }
+  }, 1000);
+}
+
+// 🟢 スタートボタン
+if (startBtn) {
+  startBtn.onclick = async () => {
+    if (isRunning) return;
+    const min = parseInt(minutesInput.value || 0);
+    const sec = parseInt(secondsInput.value || 0);
+    remainingTime = (min * 60 + sec) * 1000;
+    endTime = Date.now() + remainingTime;
+    isRunning = true;
+
+    try {
+      startSound.currentTime = 0;
+      await startSound.play();
+    } catch (e) { console.warn("start.mp3 再生ブロック:", e); }
+
+    startLocalCountdown();
+
+    // Firebaseに状態送信
+    await push(timerRef, { state: "running", endTime });
+  };
+}
+
+// ⏸ ストップボタン
+if (stopBtn) {
+  stopBtn.onclick = async () => {
+    if (!isRunning) return;
+    clearInterval(countdownInterval);
+    remainingTime = endTime - Date.now();
+    isRunning = false;
+
+    await push(timerRef, { state: "paused", remainingTime });
+  };
+}
+
+// 🔁 リセットボタン
+if (resetBtn) {
+  resetBtn.onclick = async () => {
+    clearInterval(countdownInterval);
+    isRunning = false;
+    remainingTime = 0;
+    updateTimerDisplay(0);
+    await push(timerRef, { state: "reset" });
+  };
+}
+
+// 🛰 Firebase同期（受信側）
+onChildAdded(timerRef, (snapshot) => {
+  const data = snapshot.val();
+  if (!data) return;
+
+  if (data.state === "running") {
+    endTime = data.endTime;
+    isRunning = true;
+    startLocalCountdown();
+  }
+
+  if (data.state === "paused") {
+    clearInterval(countdownInterval);
+    isRunning = false;
+    remainingTime = data.remainingTime || 0;
+    updateTimerDisplay(remainingTime);
+  }
+
+  if (data.state === "reset") {
+    clearInterval(countdownInterval);
+    isRunning = false;
+    remainingTime = 0;
+    updateTimerDisplay(0);
   }
 });
 </script>
