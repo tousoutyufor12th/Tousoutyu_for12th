@@ -270,36 +270,44 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-  // --- 🎬 初回ポップアップ＆start.mp4再生 ---
+// --- 🎬 初回ポップアップ＆start.mp4再生 ---
 window.addEventListener("DOMContentLoaded", () => {
   const introOverlay = document.getElementById("introOverlay");
   const introNextBtn = document.getElementById("introNextBtn");
   const introVideo = document.getElementById("introVideo");
 
-  // 毎回ページロード時に表示（ローカルストレージ関係なく常に出す）
+  // 毎回ページロード時に表示
   introOverlay.style.display = "flex";
 
-  introNextBtn.addEventListener("click", async () => {
-    try {
-      introNextBtn.disabled = true;
-      introNextBtn.textContent = "再生中...";
-      introVideo.style.display = "none";
-      introOverlay.style.background = "black";
+  introNextBtn.addEventListener("click", () => {
+    introNextBtn.disabled = true;
+    introNextBtn.textContent = "再生中...";
+    introOverlay.style.background = "black";
 
-      // start.mp4 再生開始
-      await introVideo.play();
+    // 🎥 一旦 video を表示状態にし（ただし透明で見えないように）
+    introVideo.style.display = "block";
+    introVideo.style.width = "1px";
+    introVideo.style.height = "1px";
+    introVideo.style.opacity = "0";
 
-      // 再生完了時に通常画面へ遷移
-      introVideo.onended = () => {
-        introOverlay.style.display = "none";
-      };
-    } catch (e) {
-      console.warn("動画再生がブロックされました:", e);
-      introOverlay.style.display = "none";
+    // 🎬 音声付きで確実に再生
+    const playPromise = introVideo.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log("動画再生開始");
+          // 再生完了時に通常画面へ遷移
+          introVideo.onended = () => {
+            introOverlay.style.display = "none";
+          };
+        })
+        .catch((e) => {
+          console.warn("動画再生がブロックされました:", e);
+          introOverlay.style.display = "none";
+        });
     }
   });
 });
-
   
 const firebaseConfig = {
   apiKey: "AIzaSyDQ32VxTsd-8VvKXh6xtkrt4C_yqHNlNbM",
