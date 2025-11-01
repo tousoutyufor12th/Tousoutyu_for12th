@@ -196,17 +196,6 @@
     設定が完了したら下のボタンを押してください。
   </p>
   <button id="introNextBtn" class="btn" style="margin-top:20px;">次へ</button>
-
-  <!-- 非表示で音だけ流す動画 -->
-<video
-  id="introVideo"
-  src="start.MP4"
-  preload="auto"
-  playsinline
-  webkit-playsinline
-  controlslist="nodownload nofullscreen noremoteplayback"
-  style="display:none;"
-></video>
 </div>
   
 <body>
@@ -278,87 +267,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-<!-- (置換ブロック) --- 初回ポップアップ＆start.mp4再生 - ここを丸ごと置換 -->
-<script>
-window.addEventListener("DOMContentLoaded", () => {
-  const introOverlay = document.getElementById("introOverlay");
-  const introNextBtn = document.getElementById("introNextBtn");
-  const introVideo = document.getElementById("introVideo");
 
-  // introVideo のスタイルを "見えないが表示" に変更（display:none は避ける）
-  introVideo.style.display = "block";
-  introVideo.style.position = "absolute";
-  introVideo.style.left = "-9999px"; // 画面外へ移動
-  introVideo.style.width = "1px";
-  introVideo.style.height = "1px";
-  introVideo.style.opacity = "1"; // opacity:0だとブラウザに無視される場合あり
-
-  // 再生に関するイベントログ（デバッグ用）
-  introVideo.addEventListener('play', () => console.log('[introVideo] play event'));
-  introVideo.addEventListener('playing', () => console.log('[introVideo] playing'));
-  introVideo.addEventListener('ended', () => console.log('[introVideo] ended'));
-  introVideo.addEventListener('error', (ev) => console.warn('[introVideo] error', ev));
-
-  // 毎回ページロード時に表示（要件通り2回目以降も表示）
-  introOverlay.style.display = "flex";
-
-  introNextBtn.addEventListener("click", async () => {
-    introNextBtn.disabled = true;
-    introNextBtn.textContent = "再生中…";
-    introOverlay.style.background = "black";
-
-    try {
-      // 明示的に load() -> 後で play()
-      introVideo.load();
-
-      // まず canplaythrough を待ってから play を試す（安定性向上）
-      const canPlay = await new Promise((resolve) => {
-        const onCan = () => {
-          introVideo.removeEventListener('canplaythrough', onCan);
-          resolve(true);
-        };
-        // タイムアウト fallback（10秒）
-        const to = setTimeout(() => {
-          introVideo.removeEventListener('canplaythrough', onCan);
-          resolve(false);
-        }, 10000);
-        introVideo.addEventListener('canplaythrough', onCan);
-      });
-
-      // クリックハンドラ内なので音声付き再生が許可されるはず
-      const playPromise = introVideo.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          console.log("start.mp4 再生開始（映像＋音声）");
-          // 再生終了でオーバーレイ消去
-          introVideo.onended = () => {
-            introOverlay.style.display = "none";
-            // 後片付け
-            introVideo.pause();
-            introVideo.currentTime = 0;
-          };
-        }).catch((err) => {
-          console.warn("video.play() が失敗しました:", err);
-          // フォールバック：音声のみをaudio要素で再生してオーバーレイを閉じる
-          try {
-            const fallbackAudio = new Audio('start.mp4');
-            fallbackAudio.play().catch(e => console.warn('fallback audio failed', e));
-          } finally {
-            introOverlay.style.display = "none";
-          }
-        });
-      } else {
-        // 古いブラウザなどで Promise 未返却 -> すぐにオーバーレイを閉じる
-        console.log("play() は undefined を返しました（古いブラウザの可能性）");
-        introOverlay.style.display = "none";
-      }
-    } catch (e) {
-      console.warn("再生処理中に例外:", e);
-      introOverlay.style.display = "none";
-    }
-  });
-});
-</script>  
 const firebaseConfig = {
   apiKey: "AIzaSyDQ32VxTsd-8VvKXh6xtkrt4C_yqHNlNbM",
   authDomain: "tousoutyu-for-12th.firebaseapp.com",
@@ -590,7 +499,8 @@ window.addEventListener("DOMContentLoaded", () => {
       console.log("自動再生がブロックされました");
     });
   }
-});
+});  
+    
 </script>
 </body>
 </html>
