@@ -383,6 +383,29 @@ const messagesRef = ref(db, "broadcast/messages");
 const alarmSound = document.getElementById("alertSound");   // alarm.mp3
 const messageSound = document.getElementById("testSound");  // message.mp3
 
+
+// 🔊 確実に音を鳴らす安全再生関数
+async function safePlay(audioElement) {
+  try {
+    audioElement.currentTime = 0;
+    await audioElement.play();
+    return true;
+  } catch (e) {
+    console.warn("音声再生がブロックされました。再試行します...");
+    return new Promise((resolve) => {
+      setTimeout(async () => {
+        try {
+          audioElement.currentTime = 0;
+          await audioElement.play();
+          resolve(true);
+        } catch (e2) {
+          resolve(false);
+        }
+      }, 400); // 0.4秒後に再試行
+    });
+  }
+}
+  
 onChildAdded(messagesRef, (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
@@ -392,14 +415,17 @@ onChildAdded(messagesRef, (snapshot) => {
   popupBody.innerHTML = `<button id="confirmNoticeBtn" class="btn" style="margin-top:15px;">通知を確認</button>`;
   overlay.style.display = "flex";
 
-  // 🔊 alarm.mp3 再生
-  try {
-    alarmSound.currentTime = 0;
-    alarmSound.play();
-  } catch (e) {
-    console.warn("alarm.mp3 再生がブロックされました:", e);
+  
+ // 🔊 alarm.mp3 を必ず鳴らす
+safePlay(alarmSound).then(success => {
+  if (!success) {
+    console.warn("alarm が鳴らなかったため、代替処理を実行");
+    // フェールセーフ（短いビープでもOK）
+    new Audio("alarm.mp3").play().catch(() => {});
   }
+});
 
+  
   // --- ステップ2: 「通知を確認」ボタンが押されたら ---
   const confirmBtn = document.getElementById("confirmNoticeBtn");
   confirmBtn.onclick = async () => {
