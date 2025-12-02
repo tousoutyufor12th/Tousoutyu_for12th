@@ -440,6 +440,11 @@ safePlay(alarmSound).then(success => {
       alarmSound.pause();
       alarmSound.currentTime = 0;
 
+        // 🔕 バイブレーション停止
+  if (navigator.vibrate) {
+    navigator.vibrate(0);
+  }
+
       // 🔊 message.mp3 を再生
       messageSound.currentTime = 0;
       await messageSound.play();
