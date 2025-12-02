@@ -410,6 +410,12 @@ onChildAdded(messagesRef, (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
 
+  // 📳 バイブレーション（デバイス対応時のみ）
+if (navigator.vibrate) {
+  // 400ms振動 → 200ms停止 → 400ms振動（体感が最も通知らしいパターン）
+  navigator.vibrate([400, 200, 400]);
+}
+
   // --- ステップ1: 「新しい通知があります」ポップアップを表示 ---
   popupTitle.textContent = "新しい通知があります";
   popupBody.innerHTML = `<button id="confirmNoticeBtn" class="btn" style="margin-top:15px;">通知を確認</button>`;
