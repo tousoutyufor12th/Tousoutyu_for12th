@@ -505,8 +505,8 @@ function setupPreview() {
 logoHeader.onclick = () => show(indexView);
 closePopup.onclick = async () => {
   try {
-    testSound.currentTime = 0;
-    await testSound.play();
+    messageSound.currentTime = 0;
+    await messageSound.play();
   } catch (e) {
     console.warn("閉じる時の音がブロックされました");
   }
