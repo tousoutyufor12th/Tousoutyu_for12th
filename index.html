@@ -109,6 +109,9 @@
     max-width: 90%;
     color: #fff;
     position: relative;
+    max-height: 80vh;   /* 画面の高さを超えないように */
+    display: flex;
+    flex-direction: column;
   }
 
   .popup h2 {
@@ -173,6 +176,13 @@
     margin-top: 10px;
     display: none;
     text-shadow: 0 0 5px #00ff00;
+  }
+
+ .popup-body-scroll {
+    max-height: 55vh;     /* テキスト部分だけスクロール可能に */
+    overflow-y: auto;
+    padding-right: 4px;   /* スクロールバーが重ならないように */
+    margin-top: 10px;
   }
 </style>
 </head>
@@ -243,7 +253,7 @@
 <div id="overlay" class="overlay">
   <div class="popup">
     <h2 id="popupTitle"></h2>
-    <p id="popupBody"></p>
+    <p id="popupBody" class="popup-body-scroll"></p>
     <button id="closePopup" class="close">閉じる</button>
   </div>
 </div>
