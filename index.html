@@ -177,8 +177,6 @@
 </style>
 </head>
 
-<body>
-    
 <!-- 🎬 初回ポップアップ＋非表示動画 -->
 <div id="introOverlay" style="
   position:fixed; inset:0;
@@ -200,6 +198,7 @@
   <button id="introNextBtn" class="btn" style="margin-top:20px;">次へ</button>
 </div>
   
+<body>
 <header id="logoHeader">
   <img src="logo.PNG" class="logo" alt="ロゴ" />
   <h1>逃走中 通知システム</h1>
@@ -364,7 +363,6 @@ sendBtn.onclick = () => {
   const message = document.getElementById('messageInput').value.trim();
   if (!message) { alert("本文を入力してください。"); return; }
 
-
   // pushで履歴を蓄積
   push(ref(db, "broadcast/messages"), {
     title,
@@ -384,40 +382,6 @@ sendBtn.onclick = () => {
 const messagesRef = ref(db, "broadcast/messages");
 const alarmSound = document.getElementById("alertSound");   // alarm.mp3
 const messageSound = document.getElementById("testSound");  // message.mp3
-     // 🔊 alarm 音声を確実に再生するキュー制御
-let alarmQueue = 0;
-let alarmPlaying = false;
-
-async function playAlarmGuaranteed() {
-  alarmQueue++;
-  if (alarmPlaying) return;  // すでに再生中ならキューのみ増加
-
-  alarmPlaying = true;
-
-  while (alarmQueue > 0) {
-    let success = false;
-
-    for (let i = 0; i < 3; i++) { // 最大3回リトライ
-      try {
-        alarmSound.currentTime = 0;
-        await alarmSound.play();
-        success = true;
-        break;
-      } catch (e) {
-        console.warn(`alarm 再生失敗 / リトライ ${i+1}`);
-        await new Promise(res => setTimeout(res, 800));
-      }
-    }
-
-    alarmQueue--;
-    await new Promise(res => setTimeout(res, 1200)); // 鳴り終わりの待ち
-  }
-
-  alarmPlaying = false;
-}
-
-
-const testSound = document.getElementById("testSound");
 
 onChildAdded(messagesRef, (snapshot) => {
   const data = snapshot.val();
@@ -425,13 +389,17 @@ onChildAdded(messagesRef, (snapshot) => {
 
   // --- ステップ1: 「新しい通知があります」ポップアップを表示 ---
   popupTitle.textContent = "新しい通知があります";
-  playAlarmGuaranteed();   // ← alarm 再生保証方式
   popupBody.innerHTML = `<button id="confirmNoticeBtn" class="btn" style="margin-top:15px;">通知を確認</button>`;
-  closePopup.style.display = "none";
   overlay.style.display = "flex";
 
- 
-  
+  // 🔊 alarm.mp3 再生
+  try {
+    alarmSound.currentTime = 0;
+    alarmSound.play();
+  } catch (e) {
+    console.warn("alarm.mp3 再生がブロックされました:", e);
+  }
+
   // --- ステップ2: 「通知を確認」ボタンが押されたら ---
   const confirmBtn = document.getElementById("confirmNoticeBtn");
   confirmBtn.onclick = async () => {
@@ -447,7 +415,6 @@ onChildAdded(messagesRef, (snapshot) => {
       // 本来の通知本文を表示
       popupTitle.textContent = data.title || "";
       popupBody.textContent = data.message || "";
-      closePopup.style.display = "block";
 
       // 履歴追加
       addToTimeline(data);
@@ -480,33 +447,24 @@ function setupPreview() {
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getDatabase, ref, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-
-    const firebaseConfig = ${JSON.stringify(firebaseConfig)};
-    const app = initializeApp(firebaseConfig);
+    const app = initializeApp(${JSON.stringify(firebaseConfig)});
     const db = getDatabase(app);
-
     const overlay = document.getElementById('overlay');
     const popupTitle = document.getElementById('popupTitle');
     const popupBody = document.getElementById('popupBody');
     const closePopup = document.getElementById('closePopup');
-
     const messagesRef = ref(db, "broadcast/messages");
-
-    onChildAdded(messagesRef, (snapshot) => {
+    onChildAdded(messagesRef, (snapshot)=>{
       const data = snapshot.val();
-      popupTitle.textContent = data.title || '';
-      popupBody.textContent = data.message || '';
-      overlay.style.display = 'flex';
+      popupTitle.textContent = data.title||'';
+      popupBody.textContent = data.message||'';
+      overlay.style.display='flex';
     });
-
-    closePopup.onclick = () => {
-      overlay.style.display = 'none';
-    };
-  <\/script>
-  </body></html>`;
-
+    closePopup.onclick=()=>overlay.style.display='none';
+  <\/script></body></html>`;
   receiverPreview.srcdoc = html;
 }
+
 logoHeader.onclick = () => show(indexView);
 closePopup.onclick = async () => {
   try {
