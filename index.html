@@ -395,7 +395,12 @@ onChildAdded(messagesRef, (snapshot) => {
   // 🔊 alarm.mp3 再生
   try {
     alarmSound.currentTime = 0;
-    alarmSound.play();
+alarmSound.play().catch(() => {
+  console.warn("alarm 再生失敗 → keepAlive 初期化後に再試行");
+  audioKeepAlive.play().then(() => {
+    setTimeout(() => alarmSound.play(), 150);
+  });
+});
   } catch (e) {
     console.warn("alarm.mp3 再生がブロックされました:", e);
   }
@@ -410,7 +415,11 @@ onChildAdded(messagesRef, (snapshot) => {
 
       // 🔊 message.mp3 を再生
       messageSound.currentTime = 0;
-      await messageSound.play();
+messageSound.play().catch(() => {
+  audioKeepAlive.play().then(() => {
+    setTimeout(() => messageSound.play(), 150);
+  });
+});
 
       // 本来の通知本文を表示
       popupTitle.textContent = data.title || "";
@@ -475,6 +484,17 @@ closePopup.onclick = async () => {
   }
   overlay.style.display = 'none';
 };
+
+// 🔊 ブラウザ自動再生ブロック解除のための無音ループ
+const audioKeepAlive = new Audio();
+audioKeepAlive.src = "silent.mp3"; // 0.1秒の完全無音mp3を用意
+audioKeepAlive.loop = true;
+
+// 初回クリックで再生スタート
+document.addEventListener("click", () => {
+  audioKeepAlive.play().catch(() => {});
+}, { once: true });
+  
   // --- 🔈 音声テスト機能 + 永続化 ---
 const soundTestBtn = document.getElementById('soundTestBtn');
 const soundStatus = document.getElementById('soundStatus');
